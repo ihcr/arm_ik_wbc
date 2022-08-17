@@ -76,10 +76,38 @@ def main(argv):
     
     # DRAW A SQUARE
     while current_time - start_time < MAX_TIME_SECS:
+        #0
+        end_target_dict = copy.deepcopy(target_dict)
+        end_target_dict["target pos"][0][0] = end_target_dict["target pos"][0][0] + 0
+        interval, traj_interval = planner.generate_trajectory(target_dict, end_target_dict)
+        for i in traj_interval:
+            # Fetch new target dict
+            target_dict = planner.run_stored_trajectory(target_dict, i)
+            #print(target_dict)
+            
+            # Fetch time
+            start_time_env = current_time
+            start_time_wall = time.time()
+            
+            # Run WBC
+            joint_des_pos = controller.runWBC(target_dict)
+
+            # Apply joint positions to robot
+            sim_robot.apply_joint_positions(joint_names, joint_des_pos)
+
+            # Step the simulation environment
+            env.step(sleep=False)
+
+            current_time = env.get_time_since_start()
+            # Add sleep time
+            expected_duration = current_time - start_time_env
+            actual_duration = time.time() - start_time_wall
+            if actual_duration < expected_duration:
+                time.sleep(expected_duration - actual_duration)
         #1
         end_target_dict = copy.deepcopy(target_dict)
-        end_target_dict["target pos"][0][1] = end_target_dict["target pos"][0][1] + 0.05
-        end_target_dict["target ori"][0][2] = end_target_dict["target ori"][0][2] + math.pi/4
+        end_target_dict["target pos"][0][1] = end_target_dict["target pos"][0][1] + 0.2
+        end_target_dict["target ori"][0][2] = end_target_dict["target ori"][0][2] + math.pi/8
         interval, traj_interval = planner.generate_trajectory(target_dict, end_target_dict)
         for i in traj_interval:
             # Fetch new target dict
@@ -137,8 +165,8 @@ def main(argv):
                 
         #3
         end_target_dict = copy.deepcopy(target_dict)
-        end_target_dict["target pos"][0][1] = end_target_dict["target pos"][0][1] -0.1
-        end_target_dict["target ori"][0][2] = end_target_dict["target ori"][0][2] - math.pi/2
+        end_target_dict["target pos"][0][1] = end_target_dict["target pos"][0][1] -0.4
+        end_target_dict["target ori"][0][2] = end_target_dict["target ori"][0][2] - math.pi/4
         interval, traj_interval = planner.generate_trajectory(target_dict, end_target_dict)
         for i in traj_interval:
             # Fetch new target dict
