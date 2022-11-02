@@ -120,7 +120,7 @@
     <child link="shoulder"/>
     <axis xyz="1 0 0"/>
     <dynamics damping="0" friction="0"/>
-    <limit effort="100" lower="-3.14" upper="3.14" velocity="20"/>
+    <limit effort="100" lower="-1.57" upper="1.57" velocity="20"/>
   </joint>
 
  <link name="arm">
@@ -184,7 +184,7 @@
     <child link="forearm"/>
     <axis xyz="0 1 0"/>
     <dynamics damping="0" friction="0"/>
-    <limit effort="100" lower="-3.14" upper="3.14" velocity="20"/>
+    <limit effort="100" lower="-1.57" upper="1.57" velocity="20"/>
   </joint>
 
  <link name="wrist">
@@ -248,7 +248,68 @@
     <child link="wrist2"/>
     <axis xyz="1 0 0"/>
     <dynamics damping="0" friction="0"/>
+    <limit effort="100" lower="-1.57" upper="1.57" velocity="20"/>
+  </joint>
+
+<link name="wrist3">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://dofarm/ee_wrist.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="interbotix_black"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://dofarm/ee_wrist.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+    <inertial> 
+            <mass value="0.11"/>
+            <inertia ixx="0" ixy="1" ixz="0" iyy="0" iyz="0" izz="1"/>
+        </inertial> 
+        <contact> 
+            <lateral_friction value="1"/>
+        </contact>
+  </link>
+
+  <joint name="wrist2_wrist3" type="revolute">
+    <origin rpy="0 0 0" xyz="0 0 0.12"/>
+    <parent link="wrist2"/>
+    <child link="wrist3"/>
+    <axis xyz="0 0 1"/>
+    <dynamics damping="0" friction="0"/>
     <limit effort="100" lower="-3.14" upper="3.14" velocity="20"/>
+  </joint>
+
+<link name="ee">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://dofarm/ee.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="interbotix_black"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://dofarm/ee.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+    <inertial> 
+            <mass value="0.11"/>
+            <inertia ixx="0" ixy="1" ixz="0" iyy="0" iyz="0" izz="1"/>
+        </inertial> 
+        <contact> 
+            <lateral_friction value="1"/>
+        </contact>
+  </link>
+
+  <joint name="wrist3_ee" type="fixed">
+    <origin rpy="0 0 0" xyz="0 0 0.047"/>
+    <parent link="wrist3"/>
+    <child link="ee"/>
   </joint>
 
 </robot>

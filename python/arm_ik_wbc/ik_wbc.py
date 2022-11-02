@@ -32,6 +32,7 @@ class IkWBC:
         self.n_velocity_dimensions = self.robot_model.nv
         self.n_configuration_dimensions = self.robot_model.nq
         self.n_of_manip_joints = self.n_configuration_dimensions - init_joint_config.size
+        print("len thing", self.n_of_manip_joints)
         self.n_of_EE = len(EE_frame_names)
         
         # base frame name and index
@@ -142,7 +143,7 @@ class IkWBC:
             if task_dict["task type"][i] == "IK":
                 self.active_task_dict["task instance"].append(InverseKinematicsTask(task_dict["init parameters"][i][0], task_dict["init parameters"][i][1], task_dict["init parameters"][i][2], task_dict["init parameters"][i][3], task_dict["init parameters"][i][4]))
             if task_dict["task type"][i] == "Joint":
-                self.active_task_dict["task instance"].append(JointTask(task_dict["init parameters"][i][0], task_dict["init parameters"][i][1], task_dict["init parameters"][i][2], task_dict["init parameters"][i][3], task_dict["init parameters"][i][4]))
+                self.active_task_dict["task instance"].append(JointTask(task_dict["init parameters"][i][0], task_dict["init parameters"][i][1], task_dict["init parameters"][i][2], task_dict["init parameters"][i][3], task_dict["init parameters"][i][4], task_dict["init parameters"][i][5]))
             if task_dict["task type"][i] == "CoM Cart":
                 self.active_task_dict["task instance"].append(CoMCartesianTask(task_dict["init parameters"][i][0], task_dict["init parameters"][i][1]))
             if task_dict["task type"][i] == "CoM Stab":
@@ -329,7 +330,10 @@ class IkWBC:
 
         self.prev_target = copy.deepcopy(targets_dict)
         
-        joint_config_no_manip = joint_config_full[:-self.n_of_manip_joints]
+        if self.n_of_manip_joints > 0:
+            joint_config_no_manip = joint_config_full[:-self.n_of_manip_joints]
+        else:
+            joint_config_no_manip = joint_config_full
 
         return joint_config_no_manip
         
@@ -344,7 +348,7 @@ class IkWBC:
         
         
     """ Control Modes """
-    def GeneralMode(self):
+    def GeneralMode(self, high_dof=True):
         self.K_pos = 0.1
         self.K_vel = 0.15
 
@@ -362,7 +366,14 @@ class IkWBC:
         for i in range(self.n_velocity_dimensions):
             task_names.append("joint " + str(i))
             task_types.append("Joint")
-            task_parameters.append([i, self.n_velocity_dimensions, 0.1, "PREV", 6])
+            task_parameters.append([i, self.n_velocity_dimensions, 0.1, "PREV", 0, self.init_joint_config])
+        
+        # for high dof arms, soft pose control may be required  
+        if high_dof == True:
+            for i in range(self.n_velocity_dimensions-self.n_of_manip_joints):
+                task_names.append("joint pose" + str(i))
+                task_types.append("Joint")
+                task_parameters.append([i, self.n_velocity_dimensions, 0.5, "POSE", 0, self.init_joint_config])
             
         for i in range(len(task_names)):
             task_dict["task name"].append(task_names[i])

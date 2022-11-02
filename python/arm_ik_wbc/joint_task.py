@@ -15,7 +15,7 @@ class JointTask:
         task_type (string): The name of the type of joint task to be applied to this joint- "PREV"-removes high oscillations, True- good task conditioning, "MANI"- reduces chances of singularites occuring
         n_of_base_DoF (unsigned int): The number of the degrees of freedom of the trunk of the robot (typically this is 6)
     """
-    def __init__(self, joint_index, system_vel_dimensions, joint_task_weight, task_type, n_of_base_DoF):
+    def __init__(self, joint_index, system_vel_dimensions, joint_task_weight, task_type, n_of_base_DoF, init_config):
         self.joint_index = joint_index
         self.system_vel_dimensions = system_vel_dimensions
         self.joint_task_weight = joint_task_weight
@@ -24,6 +24,7 @@ class JointTask:
         self.joint_robot_data = None
         self.n_of_targets = 1
         self.n_of_base_DoF = n_of_base_DoF
+        self.init_config = init_config
 
     def quickUpdateState(self, joint_config):
         # update the robot model and data
@@ -51,6 +52,9 @@ class JointTask:
             #jc = np.delete(joint_config, 6)
             #b = np.array([jc[self.joint_index]])
             b = np.array([joint_config[self.joint_index]])
+            
+        if self.task_type == "POSE":
+            b = np.array([self.init_config[self.joint_index]])
 
         # Manipulability gradient
         if self.task_type == "MANI":

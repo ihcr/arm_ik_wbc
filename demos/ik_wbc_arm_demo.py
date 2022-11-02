@@ -15,6 +15,9 @@ from limbsim.sim_robot_interface import SimRobotInterface
 from arm_ik_wbc.ik_wbc import IkWBC
 from arm_ik_wbc.trajectory_planner import TrajectoryPlanner
 
+# ROS
+#from IkWbc.msg import ik_wbc_out
+
 # absolute directory of this package
 rootdir = os.path.dirname(os.path.dirname(
         os.path.abspath(inspect.getfile(inspect.currentframe()))))

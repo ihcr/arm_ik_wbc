@@ -2,21 +2,23 @@
 # robot configs
 ################################################################################
 sim_robot_variables:
-  urdf_filename: "/models/arm/dofarm.urdf"
-
+  urdf_filename: "/models/dofarm/dofarm.urdf"
+  mesh_foldername: "/models/dofarm/dofarm"
   use_fixed_base: True
 
-  base_name: "base"
+  base_name: "base_waist"
   joint_names: [
-    "base_waist", "waist_shoulder", "shoulder_arm", "arm_forearm", "forearm_wrist", "wrist_wrist2" 
+    "base_waist", "waist_shoulder", "shoulder_arm", "arm_forearm", "forearm_wrist", "wrist_wrist2", "wrist2_wrist3"
   ]  # pinocchio order
   limb_names: ["arm"]
-  limb_endeff_names: ["wrist2"]
+  limb_endeff_names: ["ee"]
+  limb_endeff_joint_names: ["wrist3_ee"]
+  limb_endeff_frame_names: ["wrist3_ee"]
 
   base_init_pos: [0., 0., 0., 0., 0., 0., 1.] # posture
   base_init_vel: [0., 0., 0., 0., 0., 0.]
-  joint_init_pos: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
-  joint_init_vel: [0., 0., 0., 0., 0., 0.]
+  joint_init_pos: [0., 0., 0., 0., 0., 0., 0.]
+  joint_init_vel: [0., 0., 0., 0., 0., 0., 0.]
 
 
 ################################################################################
@@ -24,6 +26,6 @@ sim_robot_variables:
 ################################################################################
 control_variables:
   joint_names: [
-    "base_waist", "waist_shoulder", "shoulder_arm", "arm_forearm", "forearm_wrist", "wrist_wrist2" 
+    "base_waist", "waist_shoulder", "shoulder_arm", "arm_forearm", "forearm_wrist", "wrist_wrist2", "wrist2_wrist3"
   ]  # pinocchio order
-  joint_des_pos: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+  joint_des_pos: [0., 0., 0., 0., 0., 0., 0.]

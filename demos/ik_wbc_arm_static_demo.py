@@ -54,15 +54,26 @@ def main(argv):
     # Initialise ik wbc
     controller = IkWBC(arm_urdf_path, arm_mesh_path, EE_frame_name, EE_frame_name, base_frame_name, joint_des_pos)
     
+    # Initialise targect dict
+    EE_target_pos = [0]
+    EE_target_ori = [0]
+    for i in range(len(controller.EE_index_list_frame)):
+        EE_target_pos[i] = controller.EE_frame_pos[i].reshape(3,1)
+        rot_mat = R.from_matrix(controller.EE_frame_ori[i])
+        rot_euler = rot_mat.as_euler('xyz')
+        EE_target_ori[i] = rot_euler.reshape(3,1)
+    target_dict = {"task name":[], "target pos":[], "target ori":[]}
+    target_dict["task name"] = EE_frame_name
+    target_dict["target pos"] = copy.deepcopy(EE_target_pos)
+    target_dict["target ori"] = copy.deepcopy(EE_target_ori)
     
     start_time = env.get_time_since_start()
     current_time = start_time
     while current_time - start_time < MAX_TIME_SECS:
         start_time_env = current_time
         start_time_wall = time.time()
-        
         joint_des_pos = controller.runWBC(target_dict)
-
+        
         # Apply joint positions to robot
         sim_robot.apply_joint_positions(joint_names, joint_des_pos)
 
