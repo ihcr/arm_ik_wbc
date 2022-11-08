@@ -25,6 +25,7 @@ class JointTask:
         self.n_of_targets = 1
         self.n_of_base_DoF = n_of_base_DoF
         self.init_config = init_config
+        self.dt = 0.002
 
     def quickUpdateState(self, joint_config):
         # update the robot model and data
@@ -51,10 +52,11 @@ class JointTask:
         if self.task_type == "PREV":
             #jc = np.delete(joint_config, 6)
             #b = np.array([jc[self.joint_index]])
-            b = np.array([joint_config[self.joint_index]])
+            b = np.array([self.prev_joint_vel[self.joint_index]])
             
         if self.task_type == "POSE":
-            b = np.array([self.init_config[self.joint_index]])
+            joint_vel = (self.init_config[self.joint_index] - joint_config[self.joint_index])/self.dt
+            b = np.array([joint_vel])
 
         # Manipulability gradient
         if self.task_type == "MANI":
@@ -75,10 +77,11 @@ class JointTask:
 
         return b
 
-    def jointFindAb(self, robot_model, robot_data, joint_config):
+    def jointFindAb(self, robot_model, robot_data, joint_config, prev_joint_vel):
         # Update class variables
         self.robot_model = robot_model
         self.robot_data = robot_data
+        self.prev_joint_vel = prev_joint_vel
 
         # Find task A and b
         A = self.jointA()

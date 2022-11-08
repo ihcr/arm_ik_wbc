@@ -8,6 +8,7 @@ import pinocchio as pin #[1]
 from scipy.spatial.transform import Rotation as R #[2]
 import numpy as np #[3]
 import math
+import time
 """ Class Input:
     frame_index (unsigned int): The index of the frame in the robot model that this Cartesian task is applied to.
     task_weight (float): The task weight with a magnitude based on the priority of this task being met.
@@ -48,27 +49,40 @@ class InverseKinematicsTask:
 
     def IKb(self, target_pos, target_ori, dt):
         Nonetype = type(None)
-        # Find the position and orientation of the frame through forward kinematics
+        # Find the position of the frame through forward kinematics
         fk_pos = np.copy(self.robot_data.oMf[self.frame_index].translation).reshape(3,1)
-        fk_ori = R.from_matrix(np.copy(self.robot_data.oMf[self.frame_index].rotation))
+        #fk_ori = R.from_matrix(np.copy(self.robot_data.oMf[self.frame_index].rotation))
         # Find base desired velocity not accounting for residual
         ref_vel = (target_pos - self.prev_pos)/dt
         pos_vel = ref_vel + (np.dot(self.b_pos_gain, ((target_pos - fk_pos)/dt)))
+
         # Find the angular velocity
+        fk_ori = R.from_matrix(np.copy(self.robot_data.oMf[self.frame_index].rotation)) # rot mat at t
+        
+        #fk_ori = fk_ori.as_quat() # q at t
+        #target_ori_q = R.from_euler('xyz', target_ori.reshape(3,)) # euler at t+1
+        #target_ori_q = target_ori_q.as_quat().reshape(4,) # q at t+1
+        #prev_ori = R.from_euler('xyz', self.prev_ori.reshape(3,))
+        #prev_ori_q = prev_ori.as_quat()
+        #w = self.ang_vel_from_quat(fk_ori, target_ori_q, dt)
+        #w_vel = self.ang_vel_from_quat(prev_ori_q, target_ori_q, dt)
+        #ori_vel = (w_vel + w).reshape(3,1)
+        #ori_vel = np.dot(ori_vel, self.b_ori_gain)
+        
         fk_ori_euler = fk_ori.as_euler('xyz')
         ori_error = ((target_ori.reshape(3,) - fk_ori_euler)/dt).reshape(3,)
         w = np.dot(ori_error, self.b_ori_gain)
         w_vel = (target_ori.reshape(3,) - self.prev_ori.reshape(3,))/dt
         ori_vel = (w_vel + w).reshape(3,1)
+        
+        
+
         # Store previous values
         self.prev_pos = target_pos
-        
-        
-        
         self.prev_ori = target_ori
 
         # Find overall target velocity
-        target_vel = np.concatenate((pos_vel, ori_vel), axis=0)
+        target_vel = np.concatenate((pos_vel, ori_vel.reshape(3,1)), axis=0)
         # Apply task weight
         target_vel = target_vel * self.task_weight
         
@@ -99,4 +113,21 @@ class InverseKinematicsTask:
             self.b_gain = b_gain
             self.b_pos_gain = self.b_gain[0:3, 0:3]
             self.b_ori_gain = self.b_gain[3:, 3:]
+            
+    def quat_conj(self, quat):
+        # in the order of x, y, z, w
+        return np.array([-quat[0], -quat[1], -quat[2], quat[3]])
+    
+    def quat_mag(self, quat):
+        return math.sqrt(pow(quat[0],2) + pow(quat[1],2) + pow(quat[2],2) + pow(quat[3],2))
+    
+    def quat_inv(self, quat):
+        return self.quat_conj(quat) / self.quat_mag(quat)
+        
+    def ang_vel_from_quat(self, q1, q2, dt):
+        return (2 / dt) * np.array([
+        q1[3]*q2[0] - q1[0]*q2[3] - q1[1]*q2[2] + q1[2]*q2[1],
+        q1[3]*q2[1] + q1[0]*q2[2] - q1[1]*q2[3] - q1[2]*q2[0],
+        q1[3]*q2[2] - q1[0]*q2[1] + q1[1]*q2[0] - q1[2]*q2[3]])
+        
         

@@ -46,10 +46,9 @@ class CartesianConstraint:
         # Update class parameters
         self.robot_model = robot_model
         self.robot_data = robot_data
-
+        #print(self.constraints)
         # find C, Clb, and Cub
         C, Clb, Cub = self.CartesianC()
-
         return C, Clb, Cub
 
     def updateConstraintParameters(self, frame_index, reference_frame, constraints):

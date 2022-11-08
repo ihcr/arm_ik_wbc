@@ -16,6 +16,7 @@ from arm_ik_wbc.local_cartesian_constraint import LocalCartesianConstraint
 import sys
 import copy
 
+
 class IkWBC:
     def __init__(self, urdf_path, mesh_dir_path, EE_frame_names, EE_joint_names, base_frame, init_joint_config, floating_base=False, foot_offset=False):
         """ Initialise Pinocchio model, data and geometry model """
@@ -60,6 +61,7 @@ class IkWBC:
         self.EE_frame_ori = []
         self.prev_EE_pos = []
         self.prev_EE_ori = []
+        self.prev_joint_vel = np.zeros(self.n_velocity_dimensions)
         for i in range(self.n_of_EE):
             self.EE_frame_pos.append(0)
             self.EE_frame_ori.append(0)
@@ -218,12 +220,16 @@ class IkWBC:
                 ub[i] = ub_vel[i]
             else:
                 ub[i] = ub_pos[i]
-                
+        """    
+        for i in range(len(lb)):
+            lb[i] = -3.142
+            ub[i] = 3.142
+        """        
         # remove manipulator joint limits
         for i in range(self.n_of_manip_joints):
             lb[-(i+1)] = 0
             ub[-(i+1)] = 0
-
+            
         return lb, ub
     
         
@@ -280,7 +286,7 @@ class IkWBC:
                 b[append_index:(append_index+self.active_task_dict["task instance"][i].n_of_targets)] = b_tmp
                 append_index = append_index + self.active_task_dict["task instance"][i].n_of_targets
             if self.active_task_dict["task type"][i] == "Joint":
-                A_tmp, b_tmp = self.active_task_dict["task instance"][i].jointFindAb(self.robot_model, self.robot_data, self.current_joint_config)
+                A_tmp, b_tmp = self.active_task_dict["task instance"][i].jointFindAb(self.robot_model, self.robot_data, self.current_joint_config, self.prev_joint_vel)
                 A[append_index:(append_index+self.active_task_dict["task instance"][i].n_of_targets)] = A_tmp
                 b[append_index:(append_index+self.active_task_dict["task instance"][i].n_of_targets)] = b_tmp
                 append_index = append_index + self.active_task_dict["task instance"][i].n_of_targets
@@ -297,18 +303,32 @@ class IkWBC:
                 append_index = append_index + self.active_task_dict["task instance"][i].n_of_targets
 
         return A, b.reshape(A.shape[0],)
-        
-        
+
+
+    def autoConstraintConfig(self, targets_dict):
+        # based on the current target position and the previous target position of a frame, if both are equal in a plane set a constraint for that plane to have zero velocity
+        for i in range(len(self.active_constraint_dict["constraint name"])):
+            if self.active_constraint_dict["constraint name"][i] in targets_dict["task name"] and self.active_constraint_dict["constraint instance"][i].auto == True:
+                constraints_pos = [False, False, False]
+                constraints_ori = [False, False, False]
+                #current_constraints = self.active_constraint_dict["constraint instance"][i].constraints[3:]
+                #constraints = constraints + current_constraints
+                indx = targets_dict["task name"].index(self.active_constraint_dict["constraint name"][i])
+                for ii in range(len(targets_dict["target pos"][indx])):
+                    if targets_dict["target pos"][indx][ii] == self.prev_target["target pos"][indx][ii]:
+                        constraints_pos[ii] = True
+                    if targets_dict["target ori"][indx][ii] == self.prev_target["target ori"][indx][ii]:
+                        constraints_ori[ii] = True      
+                constraints = constraints_pos + constraints_ori
+                self.active_constraint_dict["constraint instance"][i].updateConstraintParameters(self.active_constraint_dict["constraint instance"][i].frame_index, self.active_constraint_dict["constraint instance"][i].reference_frame, constraints)
         
     def runWBC(self, targets_dict, foot_force_fb=[]):
         if self.firstQP == True:
             self.prev_target = dict(targets_dict)
         # ensure sample time is maintained
-        while ((time.time() - self.previous_time) < self.step_time):
-            self.dt = time.time() - self.previous_time
-
-        # update the time the WBC ran
-        self.previous_time = time.time()
+        start_time = time.time()
+        
+        self.autoConstraintConfig(targets_dict)
 
         # find cartesian tasks (A and b)
         A, b = self.findAb(targets_dict)
@@ -322,9 +342,13 @@ class IkWBC:
         if self.firstQP == True:
             self.qp = QP(A, b, lb, ub, C, Clb, Cub, n_of_velocity_dimensions=self.n_velocity_dimensions)
             q_vel = self.qp.solveQP()
-            self.firstQP = True
+            self.firstQP = False
         else:
-            q_vel = self.qp.solveQPHotstart(A, b, lb, ub, C, Clb, Cub)
+            self.qp = QP(A, b, lb, ub, C, Clb, Cub, n_of_velocity_dimensions=self.n_velocity_dimensions)
+            q_vel = self.qp.solveQP()
+            #q_vel = self.qp.solveQPHotstart(A, b, lb, ub, C, Clb, Cub)
+
+        self.prev_joint_vel = q_vel
 
         joint_config_full = self.jointVelocitiestoConfig(q_vel)
 
@@ -334,7 +358,9 @@ class IkWBC:
             joint_config_no_manip = joint_config_full[:-self.n_of_manip_joints]
         else:
             joint_config_no_manip = joint_config_full
-
+        
+        while time.time() - start_time < self.step_time:
+            pass
         return joint_config_no_manip
         
         
@@ -358,22 +384,27 @@ class IkWBC:
         task_types = []
         task_parameters = []
         
+        gain = np.identity(6)
+        gain[3,3] = 1
+        gain[4,4] = 1
+        gain[5,5] = 1
+        
         for i in range(self.n_of_EE):
             task_names.append(self.EE_joint_names[i])
             task_types.append("IK")
-            task_parameters.append([self.EE_index_list_frame[i], 100, 1, np.identity(6), pin.ReferenceFrame.LOCAL_WORLD_ALIGNED])
+            task_parameters.append([self.EE_index_list_frame[i], 1, 1, gain, pin.ReferenceFrame.LOCAL_WORLD_ALIGNED])
         
         for i in range(self.n_velocity_dimensions):
             task_names.append("joint " + str(i))
             task_types.append("Joint")
-            task_parameters.append([i, self.n_velocity_dimensions, 0.1, "PREV", 0, self.init_joint_config])
+            task_parameters.append([i, self.n_velocity_dimensions, 0.00001, "PREV", 0, self.init_joint_config])
         
         # for high dof arms, soft pose control may be required  
         if high_dof == True:
             for i in range(self.n_velocity_dimensions-self.n_of_manip_joints):
                 task_names.append("joint pose" + str(i))
                 task_types.append("Joint")
-                task_parameters.append([i, self.n_velocity_dimensions, 0.5, "POSE", 0, self.init_joint_config])
+                task_parameters.append([i, self.n_velocity_dimensions, 0.1, "POSE", 0, self.init_joint_config])
             
         for i in range(len(task_names)):
             task_dict["task name"].append(task_names[i])
@@ -391,7 +422,7 @@ class IkWBC:
         for i in range(self.n_of_EE):
             cstrnt_names.append(self.EE_joint_names[i])
             cstrnt_types.append("Cart")
-            cstrnt_parameters.append([self.EE_index_list_frame[i], pin.ReferenceFrame.LOCAL_WORLD_ALIGNED, False, False, False, False, False, False, False])
+            cstrnt_parameters.append([self.EE_index_list_frame[i], pin.ReferenceFrame.LOCAL_WORLD_ALIGNED, False, False, False, False, False, False, True])
         for i in range(len(cstrnt_names)):
             cstrnt_dict["constraint name"].append(cstrnt_names[i])
             cstrnt_dict["constraint type"].append(cstrnt_types[i])

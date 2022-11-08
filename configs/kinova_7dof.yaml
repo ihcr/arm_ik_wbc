@@ -2,18 +2,18 @@
 # robot configs
 ################################################################################
 sim_robot_variables:
-  urdf_filename: "/models/dofarm/dofarm.urdf"
-  mesh_foldername: "/models/dofarm/dofarm"
+  urdf_filename: "/models/kinova_7dof/urdf/kinova_7dof.urdf"
+  mesh_foldername: "/models/kinova_7dof/meshes"
   use_fixed_base: True
 
-  base_name: "base_waist"
+  base_name: "Actuator1"
   joint_names: [
-    "base_waist", "waist_shoulder", "shoulder_arm", "arm_forearm", "forearm_wrist", "wrist_wrist2", "wrist2_wrist3"
+    "Actuator1", "Actuator2", "Actuator3", "Actuator4", "Actuator5", "Actuator6", "Actuator7" 
   ]  # pinocchio order
   limb_names: ["arm"]
-  limb_endeff_names: ["vx300s/ee_gripper_link"]
-  limb_endeff_joint_names: ["ee_gripper"]
-  limb_endeff_frame_names: ["ee_gripper"]
+  limb_endeff_names: ["EndEffector_Link"]
+  limb_endeff_joint_names: ["EndEffector"]
+  limb_endeff_frame_names: [ "EndEffector"]
 
   base_init_pos: [0., 0., 0., 0., 0., 0., 1.] # posture
   base_init_vel: [0., 0., 0., 0., 0., 0.]
@@ -26,6 +26,6 @@ sim_robot_variables:
 ################################################################################
 control_variables:
   joint_names: [
-    "base_waist", "waist_shoulder", "shoulder_arm", "arm_forearm", "forearm_wrist", "wrist_wrist2", "wrist2_wrist3"
+    "Actuator1", "Actuator2", "Actuator3", "Actuator4", "Actuator5", "Actuator6", "Actuator7"
   ]  # pinocchio order
-  joint_des_pos: [0., 0.1, 1.57, 1.57, 0, -0.1, 0.]
+  joint_des_pos: [0., 0.7, 0., 0.5, 0., -1.2, 0.]
