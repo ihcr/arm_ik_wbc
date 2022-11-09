@@ -118,9 +118,9 @@ def main(argv):
         
         #1
         end_target_dict = copy.deepcopy(target_dict)
-        end_target_dict["target pos"][0][0] = end_target_dict["target pos"][0][0] - 0.5
-        end_target_dict["target pos"][0][2] = end_target_dict["target pos"][0][2] + 0.5
-        end_target_dict["target ori"][0][1] = end_target_dict["target ori"][0][1] - math.pi/2
+        #end_target_dict["target pos"][0][0] = end_target_dict["target pos"][0][0] - 0.5
+        #end_target_dict["target pos"][0][2] = end_target_dict["target pos"][0][2] + 0.5
+        end_target_dict["target ori"][0][2] = end_target_dict["target ori"][0][2] - math.pi/2
         interval, traj_interval = planner.generate_trajectory(target_dict, end_target_dict)
         for i in traj_interval:
             # Fetch new target dict

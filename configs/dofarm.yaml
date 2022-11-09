@@ -28,4 +28,4 @@ control_variables:
   joint_names: [
     "base_waist", "waist_shoulder", "shoulder_arm", "arm_forearm", "forearm_wrist", "wrist_wrist2", "wrist2_wrist3"
   ]  # pinocchio order
-  joint_des_pos: [0., 1.185, 1.57, 1.56, 0, -1.196, 0.] #0., 0.1, 1.57, 1.57, 0, -0.1, 0.
+  joint_des_pos: [0., 1.185, 1.57, 1.56, 0, -1.196, 1.57] #0., 0.1, 1.57, 1.57, 0, -0.1, 0.

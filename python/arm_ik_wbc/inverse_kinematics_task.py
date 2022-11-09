@@ -70,14 +70,14 @@ class InverseKinematicsTask:
         target_ori_q = target_ori_q.as_quat().reshape(4,) # q at t+1
         prev_ori = R.from_euler('xyz', self.prev_ori.reshape(3,))
         prev_ori_q = prev_ori.as_quat()
-        w = self.ang_vel_from_quat(fk_ori, target_ori_q, dt)
+        w = self.ang_vel_from_quat(fk_ori, target_ori_q, 1)
         w = np.dot(w, self.b_ori_gain)
         w_vel = self.ang_vel_from_quat(prev_ori_q, target_ori_q, dt)
         ori_vel = (w_vel + w).reshape(3,1)
 
         
         #fk_ori_euler = fk_ori.as_euler('xyz')
-        #ori_error = ((target_ori.reshape(3,) - fk_ori_euler)/dt).reshape(3,)
+        #ori_error = ((target_ori.reshape(3,) - fk_ori_euler)).reshape(3,)
         #w = np.dot(ori_error, self.b_ori_gain)
         #w_vel = (target_ori.reshape(3,) - self.prev_ori.reshape(3,))/dt
         #w_vel = np.dot(w_vel, self.b_ori_gain)

@@ -385,9 +385,9 @@ class IkWBC:
         task_parameters = []
         
         gain = np.identity(6)
-        gain[3,3] = 0.00
-        gain[4,4] = 0.00
-        gain[5,5] = 0.00
+        gain[3,3] = 1
+        gain[4,4] = 1
+        gain[5,5] = 1
         
         for i in range(self.n_of_EE):
             task_names.append(self.EE_joint_names[i])
@@ -397,14 +397,14 @@ class IkWBC:
         for i in range(self.n_velocity_dimensions):
             task_names.append("joint " + str(i))
             task_types.append("Joint")
-            task_parameters.append([i, self.n_velocity_dimensions, 0.001, "PREV", 0, self.init_joint_config])
+            task_parameters.append([i, self.n_velocity_dimensions, 0.0000000, "PREV", 0, self.init_joint_config])
         
         # for high dof arms, soft pose control may be required  
         if high_dof == True:
             for i in range(self.n_velocity_dimensions-self.n_of_manip_joints):
                 task_names.append("joint pose" + str(i))
                 task_types.append("Joint")
-                task_parameters.append([i, self.n_velocity_dimensions, 0.5, "POSE", 0, self.init_joint_config])
+                task_parameters.append([i, self.n_velocity_dimensions, 0.000000, "POSE", 0, self.init_joint_config])
             
         for i in range(len(task_names)):
             task_dict["task name"].append(task_names[i])
