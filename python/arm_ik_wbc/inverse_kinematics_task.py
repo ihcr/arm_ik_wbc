@@ -49,6 +49,7 @@ class InverseKinematicsTask:
 
     def IKb(self, target_pos, target_ori, dt):
         Nonetype = type(None)
+        target_ori_local = np.copy(target_ori)
         # Find the position of the frame through forward kinematics
         fk_pos = np.copy(self.robot_data.oMf[self.frame_index].translation).reshape(3,1)
         #fk_ori = R.from_matrix(np.copy(self.robot_data.oMf[self.frame_index].rotation))
@@ -57,23 +58,30 @@ class InverseKinematicsTask:
         pos_vel = ref_vel + (np.dot(self.b_pos_gain, ((target_pos - fk_pos)/dt)))
 
         # Find the angular velocity
+        # Check for Euler wrapping
+        #for i in range(len(target_ori)):
+        #    if target_ori_local[i] >= math.pi/2:
+        #        target_ori_local[i] = target_ori_local[i] - (math.pi/2)
+        
         fk_ori = R.from_matrix(np.copy(self.robot_data.oMf[self.frame_index].rotation)) # rot mat at t
         
-        #fk_ori = fk_ori.as_quat() # q at t
-        #target_ori_q = R.from_euler('xyz', target_ori.reshape(3,)) # euler at t+1
-        #target_ori_q = target_ori_q.as_quat().reshape(4,) # q at t+1
-        #prev_ori = R.from_euler('xyz', self.prev_ori.reshape(3,))
-        #prev_ori_q = prev_ori.as_quat()
-        #w = self.ang_vel_from_quat(fk_ori, target_ori_q, dt)
-        #w_vel = self.ang_vel_from_quat(prev_ori_q, target_ori_q, dt)
-        #ori_vel = (w_vel + w).reshape(3,1)
-        #ori_vel = np.dot(ori_vel, self.b_ori_gain)
-        
-        fk_ori_euler = fk_ori.as_euler('xyz')
-        ori_error = ((target_ori.reshape(3,) - fk_ori_euler)/dt).reshape(3,)
-        w = np.dot(ori_error, self.b_ori_gain)
-        w_vel = (target_ori.reshape(3,) - self.prev_ori.reshape(3,))/dt
+        fk_ori = fk_ori.as_quat() # q at t
+        target_ori_q = R.from_euler('xyz', target_ori.reshape(3,)) # euler at t+1
+        target_ori_q = target_ori_q.as_quat().reshape(4,) # q at t+1
+        prev_ori = R.from_euler('xyz', self.prev_ori.reshape(3,))
+        prev_ori_q = prev_ori.as_quat()
+        w = self.ang_vel_from_quat(fk_ori, target_ori_q, dt)
+        w = np.dot(w, self.b_ori_gain)
+        w_vel = self.ang_vel_from_quat(prev_ori_q, target_ori_q, dt)
         ori_vel = (w_vel + w).reshape(3,1)
+
+        
+        #fk_ori_euler = fk_ori.as_euler('xyz')
+        #ori_error = ((target_ori.reshape(3,) - fk_ori_euler)/dt).reshape(3,)
+        #w = np.dot(ori_error, self.b_ori_gain)
+        #w_vel = (target_ori.reshape(3,) - self.prev_ori.reshape(3,))/dt
+        #w_vel = np.dot(w_vel, self.b_ori_gain)
+        #ori_vel = (w_vel+w).reshape(3,1)
         
         
 

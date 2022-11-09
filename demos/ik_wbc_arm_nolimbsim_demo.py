@@ -85,6 +85,71 @@ def main(argv):
         #0
         end_target_dict = copy.deepcopy(target_dict)
         end_target_dict["target pos"][0][0] = end_target_dict["target pos"][0][0] + 0.
+        #end_target_dict["target ori"][0][1] = end_target_dict["target ori"][0][1] - 0.5
+        interval, traj_interval = planner.generate_trajectory(target_dict, end_target_dict)
+        for i in traj_interval:
+            #print(0)
+            # Fetch new target dict
+            target_dict = planner.run_stored_trajectory(target_dict, i)
+            start_time = time.time()
+            # Run WBC
+            joint_des_pos = controller.runWBC(target_dict)
+            #print(time.time()-start_time)
+            for ii in range(len(joint_des_pos)):
+                p.setJointMotorControl2(arm, jointIds[ii], p.POSITION_CONTROL, joint_des_pos[ii], force=100)
+            p.stepSimulation()
+            print(joint_des_pos)
+        
+        end_target_dict = copy.deepcopy(target_dict)
+        end_target_dict["target pos"][0][0] = end_target_dict["target pos"][0][0] + 0.3
+        #end_target_dict["target ori"][0][1] = end_target_dict["target ori"][0][1] + 0.5
+        interval, traj_interval = planner.generate_trajectory(target_dict, end_target_dict)
+        for i in traj_interval:
+            # Fetch new target dict
+            target_dict = planner.run_stored_trajectory(target_dict, i)
+            start_time = time.time()
+            # Run WBC
+            joint_des_pos = controller.runWBC(target_dict)
+            #print(time.time()-start_time)
+            for ii in range(len(joint_des_pos)):
+                p.setJointMotorControl2(arm, jointIds[ii], p.POSITION_CONTROL, joint_des_pos[ii], force=100)
+            p.stepSimulation()
+            print(joint_des_pos)
+        
+        #1
+        end_target_dict = copy.deepcopy(target_dict)
+        end_target_dict["target pos"][0][0] = end_target_dict["target pos"][0][0] - 0.5
+        end_target_dict["target pos"][0][2] = end_target_dict["target pos"][0][2] + 0.5
+        end_target_dict["target ori"][0][1] = end_target_dict["target ori"][0][1] - math.pi/2
+        interval, traj_interval = planner.generate_trajectory(target_dict, end_target_dict)
+        for i in traj_interval:
+            # Fetch new target dict
+            target_dict = planner.run_stored_trajectory(target_dict, i)
+            
+            # Run WBC
+            joint_des_pos = controller.runWBC(target_dict)
+        
+            for ii in range(len(joint_des_pos)):
+                p.setJointMotorControl2(arm, jointIds[ii], p.POSITION_CONTROL, joint_des_pos[ii], force=50)
+            p.stepSimulation()
+            #print(joint_des_pos)
+       
+        interval, traj_interval = planner.generate_homing_trajectory(target_dict)
+        for i in traj_interval:
+            # Fetch new target dict
+            target_dict = planner.run_stored_trajectory(target_dict, i)
+            start_time = time.time()
+            # Run WBC
+            joint_des_pos = controller.runWBC(target_dict)
+            #print(time.time()-start_time)
+            for ii in range(len(joint_des_pos)):
+                p.setJointMotorControl2(arm, jointIds[ii], p.POSITION_CONTROL, joint_des_pos[ii], force=100)
+            p.stepSimulation()
+        
+        #0
+        end_target_dict = copy.deepcopy(target_dict)
+        end_target_dict["target pos"][0][0] = end_target_dict["target pos"][0][0] + 0.
+        #end_target_dict["target ori"][0][1] = end_target_dict["target ori"][0][1] - 0.5
         interval, traj_interval = planner.generate_trajectory(target_dict, end_target_dict)
         for i in traj_interval:
             #print(0)
@@ -101,6 +166,7 @@ def main(argv):
         
         end_target_dict = copy.deepcopy(target_dict)
         end_target_dict["target pos"][0][0] = end_target_dict["target pos"][0][0] + 0.1
+        #end_target_dict["target ori"][0][1] = end_target_dict["target ori"][0][1] + 0.5
         interval, traj_interval = planner.generate_trajectory(target_dict, end_target_dict)
         for i in traj_interval:
             # Fetch new target dict
@@ -112,13 +178,31 @@ def main(argv):
             for ii in range(len(joint_des_pos)):
                 p.setJointMotorControl2(arm, jointIds[ii], p.POSITION_CONTROL, joint_des_pos[ii], force=100)
             p.stepSimulation()
+            print(joint_des_pos)
+            
+        
+        #1
+        end_target_dict = copy.deepcopy(target_dict)
+        end_target_dict["target pos"][0][1] = end_target_dict["target pos"][0][1] + 0.5
+        end_target_dict["target ori"][0][2] = end_target_dict["target ori"][0][2] + math.pi/4
+        interval, traj_interval = planner.generate_trajectory(target_dict, end_target_dict)
+        for i in traj_interval:
+            # Fetch new target dict
+            target_dict = planner.run_stored_trajectory(target_dict, i)
+            
+            # Run WBC
+            joint_des_pos = controller.runWBC(target_dict)
+        
+            for ii in range(len(joint_des_pos)):
+                p.setJointMotorControl2(arm, jointIds[ii], p.POSITION_CONTROL, joint_des_pos[ii], force=50)
+            p.stepSimulation()
             #print(joint_des_pos)
             
         
         #1
         end_target_dict = copy.deepcopy(target_dict)
-        end_target_dict["target pos"][0][1] = end_target_dict["target pos"][0][1] + 0.2
-        end_target_dict["target ori"][0][2] = end_target_dict["target ori"][0][2] + math.pi/8
+        end_target_dict["target pos"][0][0] = end_target_dict["target pos"][0][0] - 0.8
+        end_target_dict["target ori"][0][2] = end_target_dict["target ori"][0][2] + math.pi/2
         interval, traj_interval = planner.generate_trajectory(target_dict, end_target_dict)
         for i in traj_interval:
             # Fetch new target dict
@@ -132,6 +216,7 @@ def main(argv):
             p.stepSimulation()
             #print(joint_des_pos)
         
+        """
         #2
         end_target_dict = copy.deepcopy(target_dict)
         end_target_dict["target pos"][0][2] = end_target_dict["target pos"][0][2] + 0.1
@@ -200,6 +285,23 @@ def main(argv):
             
         end_target_dict = copy.deepcopy(target_dict)
         end_target_dict["target pos"][0][0] = end_target_dict["target pos"][0][0] - 0.1
+        """
+        interval, traj_interval = planner.generate_homing_trajectory(target_dict)
+        for i in traj_interval:
+            # Fetch new target dict
+            target_dict = planner.run_stored_trajectory(target_dict, i)
+            start_time = time.time()
+            # Run WBC
+            joint_des_pos = controller.runWBC(target_dict)
+            #print(time.time()-start_time)
+            for ii in range(len(joint_des_pos)):
+                p.setJointMotorControl2(arm, jointIds[ii], p.POSITION_CONTROL, joint_des_pos[ii], force=100)
+            p.stepSimulation()
+            
+        
+        end_target_dict = copy.deepcopy(target_dict)
+        end_target_dict["target pos"][0][0] = end_target_dict["target pos"][0][0] + 0.1
+        #end_target_dict["target ori"][0][1] = end_target_dict["target ori"][0][1] + 0.5
         interval, traj_interval = planner.generate_trajectory(target_dict, end_target_dict)
         for i in traj_interval:
             # Fetch new target dict
@@ -211,7 +313,58 @@ def main(argv):
             for ii in range(len(joint_des_pos)):
                 p.setJointMotorControl2(arm, jointIds[ii], p.POSITION_CONTROL, joint_des_pos[ii], force=100)
             p.stepSimulation()
+            print(joint_des_pos)
+            
         
+        #1
+        end_target_dict = copy.deepcopy(target_dict)
+        end_target_dict["target pos"][0][1] = end_target_dict["target pos"][0][1] - 0.5
+        end_target_dict["target ori"][0][2] = end_target_dict["target ori"][0][2] - math.pi/4
+        interval, traj_interval = planner.generate_trajectory(target_dict, end_target_dict)
+        for i in traj_interval:
+            # Fetch new target dict
+            target_dict = planner.run_stored_trajectory(target_dict, i)
+            
+            # Run WBC
+            joint_des_pos = controller.runWBC(target_dict)
+        
+            for ii in range(len(joint_des_pos)):
+                p.setJointMotorControl2(arm, jointIds[ii], p.POSITION_CONTROL, joint_des_pos[ii], force=50)
+            p.stepSimulation()
+            #print(joint_des_pos)
+            
+        
+        #1
+        end_target_dict = copy.deepcopy(target_dict)
+        end_target_dict["target pos"][0][0] = end_target_dict["target pos"][0][0] - 0.8
+        end_target_dict["target ori"][0][2] = end_target_dict["target ori"][0][2] - math.pi/2
+        interval, traj_interval = planner.generate_trajectory(target_dict, end_target_dict)
+        for i in traj_interval:
+            # Fetch new target dict
+            target_dict = planner.run_stored_trajectory(target_dict, i)
+            
+            # Run WBC
+            joint_des_pos = controller.runWBC(target_dict)
+        
+            for ii in range(len(joint_des_pos)):
+                p.setJointMotorControl2(arm, jointIds[ii], p.POSITION_CONTROL, joint_des_pos[ii], force=50)
+            p.stepSimulation()
+            #print(joint_des_pos)
+        
+        interval, traj_interval = planner.generate_homing_trajectory(target_dict)
+        for i in traj_interval:
+            # Fetch new target dict
+            target_dict = planner.run_stored_trajectory(target_dict, i)
+            start_time = time.time()
+            # Run WBC
+            joint_des_pos = controller.runWBC(target_dict)
+            #print(time.time()-start_time)
+            for ii in range(len(joint_des_pos)):
+                p.setJointMotorControl2(arm, jointIds[ii], p.POSITION_CONTROL, joint_des_pos[ii], force=100)
+            p.stepSimulation()
+            
+
+       
     
 if __name__ == "__main__":
     main(sys.argv[1:])

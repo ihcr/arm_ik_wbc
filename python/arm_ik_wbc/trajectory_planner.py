@@ -29,7 +29,7 @@ class TrajectoryPlanner:
         milestones_list_ori = []
         self.traj_list_pos = []
         self.traj_list_ori = []
-        interval = 0.005
+        interval = 0.002
         
         
         # find milestones for each frame
