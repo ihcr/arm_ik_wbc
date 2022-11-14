@@ -65,17 +65,18 @@ class InverseKinematicsTask:
         
         fk_ori = R.from_matrix(np.copy(self.robot_data.oMf[self.frame_index].rotation)) # rot mat at t
         
-        fk_ori = fk_ori.as_quat() # q at t
-        target_ori_q = R.from_euler('xyz', target_ori.reshape(3,)) # euler at t+1
-        target_ori_q = target_ori_q.as_quat().reshape(4,) # q at t+1
-        prev_ori = R.from_euler('xyz', self.prev_ori.reshape(3,))
-        prev_ori_q = prev_ori.as_quat()
-        w = self.ang_vel_from_quat(fk_ori, target_ori_q, 1)
-        w = np.dot(w, self.b_ori_gain)
-        w_vel = self.ang_vel_from_quat(prev_ori_q, target_ori_q, dt)
-        ori_vel = (w_vel + w).reshape(3,1)
+        """ quat method """
+        #fk_ori = fk_ori.as_quat() # q at t
+        #target_ori_q = R.from_euler('xyz', target_ori.reshape(3,)) # euler at t+1
+        #target_ori_q = target_ori_q.as_quat().reshape(4,) # q at t+1
+        #prev_ori = R.from_euler('xyz', self.prev_ori.reshape(3,))
+        #prev_ori_q = prev_ori.as_quat()
+        #w = self.ang_vel_from_quat(fk_ori, target_ori_q, 1)
+        #w = np.dot(w, self.b_ori_gain)
+        #w_vel = self.ang_vel_from_quat(prev_ori_q, target_ori_q, dt)
+        #ori_vel = (w_vel + w).reshape(3,1)
 
-        
+        """ euler method """
         #fk_ori_euler = fk_ori.as_euler('xyz')
         #ori_error = ((target_ori.reshape(3,) - fk_ori_euler)).reshape(3,)
         #w = np.dot(ori_error, self.b_ori_gain)
@@ -83,6 +84,11 @@ class InverseKinematicsTask:
         #w_vel = np.dot(w_vel, self.b_ori_gain)
         #ori_vel = (w_vel+w).reshape(3,1)
         
+        """ rotation mat method """
+        fk_ori_mat = fk_ori.as_matrix()
+        target_ori_mat = R.from_euler('xyz', target_ori.reshape(3,))
+        target_ori_mat = target_ori_mat.as_matrix()
+        ori_vel = self.rotationPD(target_ori_mat, fk_ori_mat).reshape(3,1)
         
 
         # Store previous values
@@ -137,5 +143,81 @@ class InverseKinematicsTask:
         q1[3]*q2[0] - q1[0]*q2[3] - q1[1]*q2[2] + q1[2]*q2[1],
         q1[3]*q2[1] + q1[0]*q2[2] - q1[1]*q2[3] - q1[2]*q2[0],
         q1[3]*q2[2] - q1[0]*q2[1] + q1[1]*q2[0] - q1[2]*q2[3]])
+        
+    
+    def vec_to_so3(self, omg):
+        """Converts a 3-vector to an so(3) representation
+        Args:
+            omg (ndarray): A 3-vector
+        Returns:
+            A 3x3 skew-symmetric matrix
+        Example Input:
+            omg = np.array([1, 2, 3])
+        Output:
+            np.array([[ 0, -3,  2],
+                      [ 3,  0, -1],
+                      [-2,  1,  0]])
+        """
+        return np.array([[0,      -omg[2],  omg[1]],
+                         [omg[2],       0, -omg[0]],
+                         [-omg[1], omg[0],       0]])
+    
+    def so3_to_vec(self, so3mat):
+        """Converts an so(3) representation to a 3-vector
+        
+        Args:
+            so3mat: A 3x3 skew-symmetric matrix
+        Returns: 
+            The 3-vector corresponding to so3mat
+        Example Input:
+            so3mat = np.array([[ 0, -3,  2],
+                               [ 3,  0, -1],
+                               [-2,  1,  0]])
+        Output:
+            np.array([1, 2, 3])
+        """
+        return np.array([so3mat[2][1], so3mat[0][2], so3mat[1][0]])
+
+    def matrix_log3(self, R):
+        """Computes the matrix logarithm of a rotation matrix
+        
+        Args:
+            mat: A 3x3 rotation matrix
+        Returns:
+            The matrix logarithm of R
+        Example Input:
+            R = np.array([[0, 0, 1], 
+                          [1, 0, 0], 
+                          [0, 1, 0]])
+        Output: 
+            np.array([[          0, -1.20919958,  1.20919958],
+                      [ 1.20919958,           0, -1.20919958],
+                      [-1.20919958,  1.20919958,           0]])
+        """
+        acosinput = (np.trace(R) - 1) / 2.0
+        if acosinput >= 1:
+            return np.zeros((3, 3))
+        elif acosinput <= -1:
+            if not near_zero(1 + R[2][2]):
+                omg = (1.0 / np.sqrt(2 * (1 + R[2][2]))) \
+                      * np.array([R[0][2], R[1][2], 1 + R[2][2]])
+            elif not near_zero(1 + R[1][1]):
+                omg = (1.0 / np.sqrt(2 * (1 + R[1][1]))) \
+                      * np.array([R[0][1], 1 + R[1][1], R[2][1]])
+            else:
+                omg = (1.0 / np.sqrt(2 * (1 + R[0][0]))) \
+                      * np.array([1 + R[0][0], R[1][0], R[2][0]])
+            return vec_to_so3(np.pi * omg)
+        else:
+            theta = np.arccos(acosinput)
+            return theta / 2.0 / np.sin(theta) * (R - np.array(R).T)
+        
+        
+    def rotationPD(self, des_rot, cur_rot, 
+                   des_omega=np.zeros(3), cur_omega=np.zeros(3), 
+                   des_omega_dot=np.zeros(3), 
+                   kp=np.array([100, 100, 100]), kd=np.array([0.0, 0.0, 0.0])):
+        return (kp * cur_rot.dot(self.so3_to_vec(self.matrix_log3(cur_rot.T.dot(des_rot)))) + 
+            kd * (des_omega - cur_omega) + des_omega_dot)
         
         

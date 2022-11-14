@@ -39,7 +39,7 @@ def main(argv):
     urdfFlags = p.URDF_USE_SELF_COLLISION
     plane = p.loadURDF(rootdir+"/models/plane/plane.urdf")
     robot_path = configs["sim_robot_variables"]["urdf_filename"]
-    arm = p.loadURDF(rootdir+robot_path, [0,0,0], [0,0,0,1], useFixedBase=True)
+    arm = p.loadURDF(rootdir+robot_path, [0,0,0], [0.,0.,0.,1.], useFixedBase=True)
     p.resetDebugVisualizerCamera(1.20,63.65,-31.4,[0.04,0.03,0.13])
     
     # fetch robot params
@@ -101,7 +101,7 @@ def main(argv):
             print(joint_des_pos)
         
         end_target_dict = copy.deepcopy(target_dict)
-        end_target_dict["target pos"][0][0] = end_target_dict["target pos"][0][0] + 0.3
+        end_target_dict["target pos"][0][0] = end_target_dict["target pos"][0][0] + 0.1
         #end_target_dict["target ori"][0][1] = end_target_dict["target ori"][0][1] + 0.5
         interval, traj_interval = planner.generate_trajectory(target_dict, end_target_dict)
         for i in traj_interval:
@@ -201,7 +201,7 @@ def main(argv):
         
         #1
         end_target_dict = copy.deepcopy(target_dict)
-        end_target_dict["target pos"][0][0] = end_target_dict["target pos"][0][0] - 0.8
+        end_target_dict["target pos"][0][0] = end_target_dict["target pos"][0][0] - 0.5
         end_target_dict["target ori"][0][2] = end_target_dict["target ori"][0][2] + math.pi/2
         interval, traj_interval = planner.generate_trajectory(target_dict, end_target_dict)
         for i in traj_interval:

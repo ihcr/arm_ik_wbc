@@ -404,7 +404,7 @@ class IkWBC:
             for i in range(self.n_velocity_dimensions-self.n_of_manip_joints):
                 task_names.append("joint pose" + str(i))
                 task_types.append("Joint")
-                task_parameters.append([i, self.n_velocity_dimensions, 0.000000, "POSE", 0, self.init_joint_config])
+                task_parameters.append([i, self.n_velocity_dimensions, 0.00, "POSE", 0, self.init_joint_config])
             
         for i in range(len(task_names)):
             task_dict["task name"].append(task_names[i])
